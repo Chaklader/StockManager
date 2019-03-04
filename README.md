@@ -1,1 +1,3 @@
-# StockManager
+
+
+    STOCK MANAGER APP
