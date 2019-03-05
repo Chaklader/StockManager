@@ -10,6 +10,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -21,6 +22,9 @@ public class StockManagerApplication {
 
     public static void loadStockData() {
 
+        String today = Instant.now().toString().replaceAll("T.*", "");
+
+
         HttpClient client = HttpClientBuilder.create().build();
         HttpPost post = new HttpPost("http://localhost:8080/api/v1/products/updateStock");
 
@@ -28,17 +32,17 @@ public class StockManagerApplication {
 
 
         // today
-        entries.add("{ \"productId\": \"Product ID1\", \"id\": \"Stock ID\", \"timestamp\": \"2019-03-04T06:05:16.768Z\", \"quantity\": \"25000\"}");
-        entries.add("{ \"productId\": \"Product ID2\", \"id\": \"Stock ID\", \"timestamp\": \"2019-03-04T06:05:26.768Z\", \"quantity\": \"350\"}");
-        entries.add("{ \"productId\": \"Product ID3\", \"id\": \"Stock ID\", \"timestamp\": \"2019-03-04T06:05:36.768Z\", \"quantity\": \"450\"}");
+        entries.add("{ \"productId\": \"Product ID1\", \"id\": \"Stock ID\", \"timestamp\":" + "\"" + today + "T06:05:16.768Z\", \"quantity\": \"25000\"}");
+        entries.add("{ \"productId\": \"Product ID2\", \"id\": \"Stock ID\", \"timestamp\":" + "\"" + today + "T06:05:26.768Z\", \"quantity\": \"350\"}");
+        entries.add("{ \"productId\": \"Product ID3\", \"id\": \"Stock ID\", \"timestamp\":" + "\"" + today + "T06:05:36.768Z\", \"quantity\": \"450\"}");
 
-        entries.add("{ \"productId\": \"Product ID4\", \"id\": \"Stock ID1\", \"timestamp\": \"2019-03-04T06:05:46.768Z\", \"quantity\": \"550\"}");
-        entries.add("{ \"productId\": \"Product ID5\", \"id\": \"Stock ID1\", \"timestamp\": \"2019-03-04T06:05:56.768Z\", \"quantity\": \"65000\"}");
-        entries.add("{ \"productId\": \"Product ID6\", \"id\": \"Stock ID1\", \"timestamp\": \"2019-03-04T06:06:06.768Z\", \"quantity\": \"750\"}");
+        entries.add("{ \"productId\": \"Product ID4\", \"id\": \"Stock ID1\", \"timestamp\":" + "\"" + today + "T06:05:46.768Z\", \"quantity\": \"550\"}");
+        entries.add("{ \"productId\": \"Product ID5\", \"id\": \"Stock ID1\", \"timestamp\":" + "\"" + today + "T06:05:56.768Z\", \"quantity\": \"65000\"}");
+        entries.add("{ \"productId\": \"Product ID6\", \"id\": \"Stock ID1\", \"timestamp\":" + "\"" + today + "T06:06:06.768Z\", \"quantity\": \"750\"}");
 
-        entries.add("{ \"productId\": \"Product ID7\", \"id\": \"Stock ID2\", \"timestamp\": \"2019-03-04T06:06:16.768Z\", \"quantity\": \"85000\"}");
-        entries.add("{ \"productId\": \"Product ID8\", \"id\": \"Stock ID2\", \"timestamp\": \"2019-03-04T06:06:26.768Z\", \"quantity\": \"950\"}");
-        entries.add("{ \"productId\": \"Product ID9\", \"id\": \"Stock ID2\", \"timestamp\": \"2019-03-04T06:06:36.768Z\", \"quantity\": \"1050\"}");
+        entries.add("{ \"productId\": \"Product ID7\", \"id\": \"Stock ID2\", \"timestamp\":" + "\"" + today + "T06:06:16.768Z\", \"quantity\": \"85000\"}");
+        entries.add("{ \"productId\": \"Product ID8\", \"id\": \"Stock ID2\", \"timestamp\":" + "\"" + today + "T06:06:26.768Z\", \"quantity\": \"950\"}");
+        entries.add("{ \"productId\": \"Product ID9\", \"id\": \"Stock ID2\", \"timestamp\":" + "\"" + today + "T06:06:36.768Z\", \"quantity\": \"1050\"}");
 
 
         // last month
@@ -90,7 +94,7 @@ public class StockManagerApplication {
     public static void main(String[] args) {
 
         SpringApplication.run(StockManagerApplication.class, args);
-        loadStockData();
+//        loadStockData();
     }
 
 

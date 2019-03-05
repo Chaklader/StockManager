@@ -2,38 +2,45 @@ package com.stock.manager.StockManager.util;
 
 import java.util.*;
 
+import com.stock.manager.StockManager.models.Product;
 import org.apache.commons.collections.MapIterator;
 import org.apache.commons.collections.map.LRUMap;
-
-import static java.util.stream.Collectors.toMap;
 
 
 /**
  * Created by Chaklader on 2019-03-03.
  */
-public class MemoryCache<K, T> {
-
+public class MemoryCache<K, V> {
 
     private long timeToLive;
     private LRUMap lruMap;
 
+    /**
+     * custom class that stores the cache value
+     * and the timestamp for the last access
+     */
     protected class CacheObject {
 
         public long lastAccessed = System.currentTimeMillis();
-        public T value;
+        public V value;
 
-        protected CacheObject(T value) {
+        protected CacheObject(V value) {
             this.value = value;
         }
     }
 
     /**
-     * @param timeToLive    Items will expire based on a time to live period.
+     * @param timeToLive    this is the permitted period of time for an object to live since
+     *                      they are last accessed.
+     *
+     *                      <p>
      * @param timerInterval For the expiration of items use the timestamp of the last access
      *                      and in a separate thread remove the items when the time to live
      *                      limit is reached. This is nice for reducing memory pressure for
      *                      applications that have long idle time in between accessing the
      *                      cached objects. We have disabled the cleanup for this case scenario
+     *
+     *                      <p>
      * @param maxItems      Cache will keep most recently used items if we will try to add more
      *                      items then max specified. The Apache common collections has a LRUMap,
      *                      which, removes the least used entries from a fixed sized map
@@ -49,6 +56,7 @@ public class MemoryCache<K, T> {
             Thread t = new Thread(new Runnable() {
 
                 public void run() {
+
                     while (true) {
                         try {
                             Thread.sleep(timerInterval * 1000);
@@ -56,9 +64,10 @@ public class MemoryCache<K, T> {
                         }
 
                         /*
-                         *
+                         * clean the objects from the cache that has reached
+                         * the timeToLive period after the last access.
                          * */
-                        // cleanup();
+                        cleanup();
                     }
                 }
             });
@@ -68,40 +77,79 @@ public class MemoryCache<K, T> {
         }
     }
 
-    public void put(K key, T value) {
+
+    /**
+     * insert a new key and value inside the cache memory
+     *
+     * @param key
+     * @param value
+     */
+    public void put(K key, V value) {
+
         synchronized (lruMap) {
+
+            /**
+             * we have reached the max. size of items decided for the cache
+             * and hence, we are not allowed to add more items for now. We
+             * will need for the chache cleaning to add further items.
+             */
+            if (lruMap.isFull()) {
+                return;
+            }
+
             lruMap.put(key, new CacheObject(value));
         }
     }
 
+
+    /**
+     * retrieve the cache object from the memory using the key
+     *
+     * @param key
+     * @return
+     */
     @SuppressWarnings("unchecked")
-    public T get(K key) {
+    public V get(K key) {
 
         synchronized (lruMap) {
 
-            CacheObject c = (CacheObject) lruMap.get(key);
+            CacheObject object = (CacheObject) lruMap.get(key);
 
-            if (c == null)
+            if (object == null)
                 return null;
+
             else {
-                c.lastAccessed = System.currentTimeMillis();
-                return c.value;
+                object.lastAccessed = System.currentTimeMillis();
+                return object.value;
             }
         }
     }
 
+    /**
+     * remove a cache object from the memory using the key
+     *
+     * @param key
+     */
     public void remove(K key) {
+
         synchronized (lruMap) {
             lruMap.remove(key);
         }
     }
 
     public int size() {
+
         synchronized (lruMap) {
             return lruMap.size();
         }
     }
 
+
+    /**
+     * we will look after the cache objects with a certain interval (ie timerInterval)
+     * that has stayed in the memory inactively more than the time to live period and
+     * remove them iteratively.
+     */
     @SuppressWarnings("unchecked")
     public void cleanup() {
 
@@ -109,23 +157,27 @@ public class MemoryCache<K, T> {
         ArrayList<K> deleteKey = null;
 
         synchronized (lruMap) {
-            MapIterator itr = lruMap.mapIterator();
+
+            MapIterator iterator = lruMap.mapIterator();
 
             deleteKey = new ArrayList<K>((lruMap.size() / 2) + 1);
+
             K key = null;
-            CacheObject c = null;
+            CacheObject object = null;
 
-            while (itr.hasNext()) {
-                key = (K) itr.next();
-                c = (CacheObject) itr.getValue();
+            while (iterator.hasNext()) {
 
-                if (c != null && (now > (timeToLive + c.lastAccessed))) {
+                key = (K) iterator.next();
+                object = (CacheObject) iterator.getValue();
+
+                if (object != null && (now > (object.lastAccessed + timeToLive))) {
                     deleteKey.add(key);
                 }
             }
         }
 
         for (K key : deleteKey) {
+
             synchronized (lruMap) {
                 lruMap.remove(key);
             }
@@ -134,33 +186,36 @@ public class MemoryCache<K, T> {
         }
     }
 
-
-    public Map<String, Integer> convertToMap() {
+    /**
+     * convert the cache full of items to regular HashMap with the same
+     * key and value pair
+     *
+     * @return
+     */
+    public Map<Product, Integer> convertToMap() {
 
         synchronized (lruMap) {
 
-            Map<String, Integer> m = new HashMap<>();
-
+            Map<Product, Integer> map = new HashMap<>();
             MapIterator iterator = lruMap.mapIterator();
 
-            CacheObject d = null;
-            CacheObject c = null;
+            K k = null;
+            V v = null;
+
+            CacheObject o = null;
 
             while (iterator.hasNext()) {
 
-                d = (CacheObject) iterator.getKey();
-                c = (CacheObject) iterator.getValue();
+                k = (K) iterator.next();
+                v = (V) iterator.getValue();
 
-                if (c != null && d != null) {
+                Product product = (Product) k;
+                int value = Integer.parseInt(String.valueOf(v));
 
-                    String key = String.valueOf(d);
-                    String value = String.valueOf(c);
-
-                    m.put(key, Integer.parseInt(value));
-                }
+                map.put(product, value);
             }
 
-            return m;
+            return map;
         }
     }
 
