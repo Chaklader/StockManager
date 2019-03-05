@@ -12,6 +12,7 @@ import org.apache.commons.collections.map.LRUMap;
  */
 public class MemoryCache<K, V> {
 
+
     private long timeToLive;
     private LRUMap lruMap;
 
@@ -88,6 +89,10 @@ public class MemoryCache<K, V> {
 
         synchronized (lruMap) {
 
+            if (key == null) {
+                return;
+            }
+
             /**
              * we have reached the max. size of items decided for the cache
              * and hence, we are not allowed to add more items for now. We
@@ -112,15 +117,39 @@ public class MemoryCache<K, V> {
     public V get(K key) {
 
         synchronized (lruMap) {
+            // 2019-03-05 13:54:02.0
+            // 2019-03-05 13:54:01.754
 
-            CacheObject object = (CacheObject) lruMap.get(key);
+            MapIterator iterator = lruMap.mapIterator();
 
-            if (object == null)
+            K k = null;
+            V v = null;
+
+            CacheObject o = null;
+
+            while (iterator.hasNext()) {
+
+                k = (K) iterator.next();
+                v = (V) iterator.getValue();
+
+                Product product = (Product) k;
+                Product product1 = (Product) key;
+
+                if (product.getProductId().equalsIgnoreCase(product1.getProductId())) {
+
+                    o = (CacheObject) v;
+                }
+            }
+
+
+//            object = (CacheObject) lruMap.get(key);
+
+            if (o == null)
                 return null;
 
             else {
-                object.lastAccessed = System.currentTimeMillis();
-                return object.value;
+                o.lastAccessed = System.currentTimeMillis();
+                return o.value;
             }
         }
     }
@@ -210,6 +239,8 @@ public class MemoryCache<K, V> {
                 v = (V) iterator.getValue();
 
                 Product product = (Product) k;
+
+                // this fails right here
                 int value = Integer.parseInt(String.valueOf(v));
 
                 map.put(product, value);

@@ -39,7 +39,6 @@ public class ProductAPI {
      * of 1800s since the item was last accessed. We will be able to store for the maximum of 10,000
      * products info and impose a clean up policies in each 500s the reduce the memory pressure.
      */
-//    MemoryCache<String, Integer> cache = new MemoryCache<String, Integer>(1800, 500, 10000);
     MemoryCache<Product, Integer> cache = new MemoryCache<>(1800, 500, 10000);
 
     private ProductService service;
@@ -92,7 +91,7 @@ public class ProductAPI {
         if (!optional.isPresent()) {
 
             service.save(product);
-            cache.put(product, 0);
+            cache.put(product, 55);
 
             return ResponseEntity.status(HttpStatus.CREATED).body(product);
         }
@@ -107,23 +106,27 @@ public class ProductAPI {
          * */
         if (product.getTimestamp().compareTo(prod.getTimestamp()) >= 0) {
 
-
             /*
              * If we have fewer stocks than earlier record, the difference is already sold.
              * Be mindful, that the company could introduce new stocks in the market (ie
              * stock split etc) but this is not our concern. We will only count as sold when
              * the current quantity is lesser than the earlier record.
-             *
              * */
             if (product.getQuantity() < prod.getQuantity()) {
 
                 int currentSales = prod.getQuantity() - product.getQuantity();
-                int previousSales = cache.get(product);
 
-                /*
-                 * update the stock sales record
-                 * */
-                cache.put(product, previousSales + currentSales);
+                if(cache.get(prod) !=null){
+
+                    int previousSales = cache.get(prod);
+
+                    System.out.println("Miami");
+
+                    /*
+                     * update the stock sales record
+                     * */
+                    cache.put(product, previousSales + currentSales);
+                }
             }
 
             service.save(product);
@@ -368,7 +371,7 @@ public class ProductAPI {
     public Map<Product, Integer> findTopSellingProducts(int n, String time) {
 
         if (!time.equalsIgnoreCase("today")
-                || !time.equalsIgnoreCase("lastMonth")) {
+                && !time.equalsIgnoreCase("lastMonth")) {
 
             return new HashMap<>();
         }
