@@ -74,7 +74,7 @@ public class ProductAPI {
      * <p>
      * We can use a similar cURL request for the POST call for the storage,
      * <p>
-     * $ curl -i -X POST -H "Content-Type:application/json" -d "{ \"productId\": \"Product ID\", \"id\": \"Stock ID\", \"timestamp\": \"2019-01-16T22:54:01.754Z\", \"quantity\": \"250\"}" http://localhost:8080/api/v1/products/updateStock
+     * $ curl -i -X POST -H "Content-Type:application/json" -d "{ \"productId\": \"Product ID\", \"id\": \"Stock ID\", \"timestamp\": \"2020-01-16T22:54:01.754Z\", \"quantity\": \"250\"}" http://localhost:8080/api/v1/products/updateStock
      *
      * @param product the product data we intended to store in the database
      * @return HTTP status 201 if new information is stored and 204 if there is no change
@@ -158,7 +158,7 @@ public class ProductAPI {
      * retrieve the product info from the storage and display to the user
      * We can achieve purpose using a similar cURL GET request,
      * <p>
-     * $ curl -X GET http://localhost:8080/api/v1/products/stock?productId=Product%20ID1 | jq
+     * $ curl -X GET http://localhost:8080/api/v1/products/stock?productId=Product%20ID | jq
      *
      * @param productId the product ID that we look for in the storage
      * @return a JSON response with the product info (incl. the request timestamp in UTC)
