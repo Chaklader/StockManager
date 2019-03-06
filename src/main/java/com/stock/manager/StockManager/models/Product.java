@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import java.sql.Timestamp;
 import java.util.Objects;
 
@@ -17,10 +19,12 @@ import java.util.Objects;
 public class Product {
 
     @Id
+    @NotNull
     @Column(name = "productId")
     private String productId;
 
     @Column(name = "stockId")
+    @NotNull
     private String id;
 
     @Column(name = "stock_timestamp")
@@ -28,6 +32,7 @@ public class Product {
     private Timestamp timestamp;
 
     @Column(name = "quantity")
+    @Min(value = 0L, message = "The value must be positive")
     private int quantity;
 
 

@@ -8,11 +8,13 @@ import com.stock.manager.StockManager.util.SortingHelper;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 
+import javax.validation.Valid;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -72,13 +74,13 @@ public class ProductAPI {
      * <p>
      * We can use a similar cURL request for the POST call for the storage,
      * <p>
-     * $ curl -i -X POST -H "Content-Type:application/json" -d "{ \"productId\": \"Product ID\", \"id\": \"Stock ID\", \"timestamp\": \"2014-01-16T22:54:01.754Z\", \"quantity\": \"250\"}" http://localhost:8080/api/v1/products/updateStock
+     * $ curl -i -X POST -H "Content-Type:application/json" -d "{ \"productId\": \"Product ID\", \"id\": \"Stock ID\", \"timestamp\": \"2019-01-16T22:54:01.754Z\", \"quantity\": \"250\"}" http://localhost:8080/api/v1/products/updateStock
      *
      * @param product the product data we intended to store in the database
      * @return HTTP status 201 if new information is stored and 204 if there is no change
      */
     @PostMapping(value = "/updateStock", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<Product> createProduct(@RequestBody Product product) {
+    public ResponseEntity<Product> createProduct(@RequestBody @Valid Product product) {
 
         /*
          * check if a newer stock was processed earlier
