@@ -17,8 +17,7 @@ public class MemoryCache<K, V> {
     private LRUMap lruMap;
 
     /**
-     * custom class that stores the cache value
-     * and the timestamp for the last access
+     * custom class that stores the cache value and the last access timestamp
      */
     protected class CacheObject {
 
@@ -30,21 +29,19 @@ public class MemoryCache<K, V> {
         }
     }
 
+
     /**
      * @param timeToLive    this is the permitted period of time for an object to live since
      *                      they are last accessed.
      *
      *                      <p>
-     * @param timerInterval For the expiration of items use the timestamp of the last access
-     *                      and in a separate thread remove the items when the time to live
-     *                      limit is reached. This is nice for reducing memory pressure for
-     *                      applications that have long idle time in between accessing the
-     *                      cached objects. We have disabled the cleanup for this case scenario
+     * @param timerInterval the frequency for the time interval to impose the cleanup policy.
+     *                      This is necessary te reduce the memory pressure where the memory
+     *                      is critical.
      *
      *                      <p>
      * @param maxItems      Cache will keep most recently used items if we will try to add more
-     *                      items then max specified. The Apache common collections has a LRUMap,
-     *                      which, removes the least used entries from a fixed sized map
+     *                      items then max specified.
      */
     public MemoryCache(long timeToLive, final long timerInterval, int maxItems) {
 
@@ -66,13 +63,18 @@ public class MemoryCache<K, V> {
 
                         /*
                          * clean the objects from the cache that has reached
-                         * the timeToLive period after the last access.
+                         * the "time to live" period after the last access.
                          * */
                         cleanup();
                     }
                 }
             });
 
+            /*
+             * The Daemon is a low priority thread which will run in the background to perform the cleaning
+             * process and the GC doesn't need to wait while it's still running to shutdown the system if
+             * the app is terminated.
+             * */
             t.setDaemon(true);
             t.start();
         }
@@ -96,7 +98,7 @@ public class MemoryCache<K, V> {
             /**
              * we have reached the max. size of items decided for the cache
              * and hence, we are not allowed to add more items for now. We
-             * will need for the chache cleaning to add further items.
+             * will need for the cache cleaning to append further items.
              */
             if (lruMap.isFull()) {
                 return;
@@ -117,8 +119,6 @@ public class MemoryCache<K, V> {
     public V get(K key) {
 
         synchronized (lruMap) {
-            // 2019-03-05 13:54:02.0
-            // 2019-03-05 13:54:01.754
 
             MapIterator iterator = lruMap.mapIterator();
 
@@ -127,27 +127,24 @@ public class MemoryCache<K, V> {
 
             CacheObject o = null;
 
+            Product product = (Product) key;
+
             while (iterator.hasNext()) {
 
                 k = (K) iterator.next();
                 v = (V) iterator.getValue();
 
-                Product product = (Product) k;
-                Product product1 = (Product) key;
+                Product p = (Product) k;
 
-                if (product.getProductId().equalsIgnoreCase(product1.getProductId())) {
-
+                if (p.getProductId().equalsIgnoreCase(product.getProductId())) {
                     o = (CacheObject) v;
+                    break;
                 }
             }
 
-
-//            object = (CacheObject) lruMap.get(key);
-
-            if (o == null)
+            if (o == null) {
                 return null;
-
-            else {
+            } else {
                 o.lastAccessed = System.currentTimeMillis();
                 return o.value;
             }
@@ -166,6 +163,11 @@ public class MemoryCache<K, V> {
         }
     }
 
+    /**
+     * find the size of the memory cache
+     *
+     * @return size of the cache
+     */
     public int size() {
 
         synchronized (lruMap) {
@@ -175,42 +177,47 @@ public class MemoryCache<K, V> {
 
 
     /**
-     * we will look after the cache objects with a certain interval (ie timerInterval)
-     * that has stayed in the memory inactively more than the time to live period and
-     * remove them iteratively.
+     * we will look after the cache objects with a certain time interval
+     * that has stayed in the memory inactively more than the time to live
+     * period and remove them iteratively.
      */
     @SuppressWarnings("unchecked")
     public void cleanup() {
 
         long now = System.currentTimeMillis();
-        ArrayList<K> deleteKey = null;
+        ArrayList<K> deleteList = null;
 
         synchronized (lruMap) {
 
             MapIterator iterator = lruMap.mapIterator();
 
-            deleteKey = new ArrayList<K>((lruMap.size() / 2) + 1);
+            deleteList = new ArrayList<K>((lruMap.size() / 2) + 1);
 
             K key = null;
-            CacheObject object = null;
+            CacheObject o = null;
 
             while (iterator.hasNext()) {
 
                 key = (K) iterator.next();
-                object = (CacheObject) iterator.getValue();
+                o = (CacheObject) iterator.getValue();
 
-                if (object != null && (now > (object.lastAccessed + timeToLive))) {
-                    deleteKey.add(key);
+                if (o != null && (now > (o.lastAccessed + timeToLive))) {
+                    deleteList.add(key);
                 }
             }
         }
 
-        for (K key : deleteKey) {
+        for (K key : deleteList) {
 
             synchronized (lruMap) {
                 lruMap.remove(key);
             }
 
+            /*
+             * A yielding thread tells the OS (or the virtual machine etc) it's willing
+             * to let other threads be scheduled in its stead. This indicates it's not
+             * doing something too critical (It's only a hint, though)
+             * */
             Thread.yield();
         }
     }
@@ -225,7 +232,8 @@ public class MemoryCache<K, V> {
 
         synchronized (lruMap) {
 
-            Map<Product, Integer> map = new HashMap<>();
+            Map<Product, Integer> convertedMap = new HashMap<>();
+
             MapIterator iterator = lruMap.mapIterator();
 
             K k = null;
@@ -240,14 +248,36 @@ public class MemoryCache<K, V> {
 
                 Product product = (Product) k;
 
-                // this fails right here
-                int value = Integer.parseInt(String.valueOf(v));
+                o = (CacheObject) v;
+                int itemsSold = Integer.valueOf((o.value).toString());
 
-                map.put(product, value);
+                convertedMap.put(product, itemsSold);
             }
 
-            return map;
+            return convertedMap;
         }
     }
 
+
+//    public Map<K, V> convertToMap2() {
+//
+//        Map<K, V> map = new HashMap<>();
+//
+//        synchronized (lruMap) {
+//
+//            Iterator it = lruMap.entrySet().iterator();
+//
+//            while (it.hasNext()) {
+//
+//                Map.Entry entry = (Map.Entry) it.next();
+//
+//                K k = (K) entry.getKey();
+//                V v = (V) entry.getValue();
+//
+//                map.put(k, v);
+//            }
+//
+//            return map;
+//        }
+//    }
 }

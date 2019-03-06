@@ -15,11 +15,6 @@ import java.util.Optional;
 @Repository
 public interface ProductRepository extends CrudRepository<Product, String> {
 
-
-//    @Query(value = "SELECT * FROM StockHandler.product WHERE product_id = :productId", nativeQuery = true)
-//    Optional<Product> findByProductId(@Param("productId") String productId);
-
-
     @Query(value = "SELECT * FROM StockHandler.product WHERE DATE(stock_timestamp) BETWEEN  DATE(:startDate) AND DATE(:endDate) ORDER BY quantity DESC LIMIT 3 ", nativeQuery = true)
     Optional<List<Product>> findTopThreeAvailableProducts(@Param("startDate") String startDate, @Param("endDate") String endDate);
 }

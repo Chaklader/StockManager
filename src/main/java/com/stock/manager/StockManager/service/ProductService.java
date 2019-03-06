@@ -22,10 +22,6 @@ public class ProductService {
         this.repository = productRepository;
     }
 
-//    public Optional<Product> findByProductId(String id) {
-//        return repository.findByProductId(id);
-//    }
-
     public Optional<Product> findById(String id) {
         return repository.findById(id);
     }
@@ -39,33 +35,11 @@ public class ProductService {
         return (List<Product>) repository.findAll();
     }
 
-//    public List<Product> findAllWithCreationDateTimeBefore(Date date) {
-//        return (List<Product>) repository.findAllWithCreationDateTimeBefore(date);
-//    }
-
-//    public List<Product> findAllWithCreationRange(Date start, Date end) {
-//        return (List<Product>) repository.findAllWithCreationRange(start, end);
-//    }
-
-//    public List<Product> findByProductId(String productId) {
-//
-//        return (List<Product>) repository.findByProductId(productId);
-//    }
-
     public Product save(Product Product) {
         return repository.save(Product);
     }
 
-//    public void deleteById(Long id) {
-//        repository.deleteById(id);
-//    }
-
     public void deleteAll() {
         repository.deleteAll();
     }
-
-//    public Product findByProductId(String productId) {
-//
-//        return repository.findByProductId(productId);
-//    }
 }
